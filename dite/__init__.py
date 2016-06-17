@@ -42,14 +42,13 @@ class ElasticsearchFDW (ForeignDataWrapper):
 
     def execute(self, quals, columns):
         conn = httplib.HTTPConnection(self.host, self.port)
-        conn.request("GET", "/%s/%s/_search?q=*:*&size=100000000" % (self.node, self.index))
+        conn.request("GET", "/%s/%s/_search&size=10000" % (self.node, self.index))
         resp = conn.getresponse()
         if not 200 == resp.status:
-            return (0, 0)
+            yield {0, 0}
 
         raw = resp.read()
         data = json.loads(raw)
-        out = []
         for hit in data['hits']['hits']:
             row = {}
             for col in columns:
@@ -57,9 +56,7 @@ class ElasticsearchFDW (ForeignDataWrapper):
                     row[col] = hit['_id']
                 elif col in hit['_source']:
                     row[col] = hit['_source'][col]
-            out.append(row)
-
-        return out
+            yield row
 
     @property
     def rowid_column(self):
