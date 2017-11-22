@@ -42,10 +42,10 @@ class ElasticsearchFDW (ForeignDataWrapper):
 
     def execute(self, quals, columns):
         conn = httplib.HTTPConnection(self.host, self.port)
-        conn.request("GET", "/%s/%s/_search&size=10000" % (self.node, self.index))
+        conn.request("GET", "/%s/%s/_search?size=10000" % (self.node, self.index))
         resp = conn.getresponse()
         if not 200 == resp.status:
-            yield {0, 0}
+            yield {}
 
         raw = resp.read()
         data = json.loads(raw)
@@ -72,7 +72,7 @@ class ElasticsearchFDW (ForeignDataWrapper):
         content = json.dumps(values)
 
         conn = httplib.HTTPConnection(self.host, self.port)
-        conn.request("PUT", "/%s/%s/%s" % (self.node, self.index, id), content)
+        conn.request("PUT", "/%s/%s/%s" % (self.node, self.index, id), content, {'Content-Type': 'application/json'})
         resp = conn.getresponse()
         if not 200 == resp.status:
             return
